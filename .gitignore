@@ -205,3 +205,47 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Project-specific files
+# Database files
+data/*.db
+data/*.db-journal
+data/*.pickle
+data/token.pickle
+
+# Log files
+logs/
+*.log
+*.log.*
+
+# Environment variables (keep env.example)
+.env
+.env.local
+.env.*.local
+
+# IDE specific
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# Google OAuth credentials (if stored locally)
+credentials.json
+client_secret.json
+token.json
