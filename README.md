@@ -18,8 +18,20 @@ A production-ready real-time voice assistant that helps users schedule calendar 
 - ☁️ **AWS EC2 Ready** - Complete deployment configuration for EC2 instances
 - 📚 **API Documentation** - Interactive Swagger/OpenAPI documentation
 
+## 🌐 Deployed Application
+
+**Live URL**: [Add your deployed URL here, e.g., `https://agentscheduler.co.in/`]
+
+> **Note**: If you haven't deployed the application yet, you can run it locally following the [Running Locally](#-running-locally) instructions below.
+
+The application is deployed and ready to use. Follow the [Testing Instructions](#-testing-the-agent) below to test the voice scheduling agent.
+
 ## 📋 Table of Contents
 
+- [Deployed Application](#-deployed-application)
+- [Testing the Agent](#-testing-the-agent)
+- [Running Locally](#-running-locally)
+- [Calendar Integration](#-calendar-integration)
 - [Architecture](#architecture)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
@@ -29,6 +41,263 @@ A production-ready real-time voice assistant that helps users schedule calendar 
 - [Deployment](#deployment)
 - [Development](#development)
 - [Troubleshooting](#troubleshooting)
+
+## 🧪 Testing the Agent
+
+### Prerequisites for Testing
+
+1. **Microphone Access**: Ensure your browser has permission to access your microphone
+2. **Google Account**: You'll need a Google account to connect your calendar
+3. **Modern Browser**: Chrome, Edge, or Firefox (latest versions recommended)
+
+### Step-by-Step Testing Guide
+
+#### 1. Access the Application
+
+Navigate to the deployed URL (or `http://localhost:8000` if running locally).
+
+#### 2. Connect Google Calendar
+
+1. Click the **"Connect Calendar"** button on the main page
+2. You'll be redirected to Google's OAuth consent screen
+3. Sign in with your Google account
+4. Grant permissions to access your Google Calendar
+5. You'll be redirected back to the application with a success message
+
+**Note**: The first time you connect, Google will ask for permission to access your calendar. This is required for the agent to create events.
+
+#### 3. Start a Voice Conversation
+
+1. Click the **"Start Conversation"** button (or the voice orb)
+2. Grant microphone permissions when prompted by your browser
+3. Wait for the assistant to greet you and introduce itself
+
+#### 4. Schedule a Meeting
+
+Try these example conversations:
+
+**Example 1: Simple Meeting**
+- You: "Hi, I'd like to schedule a meeting"
+- Assistant: "Hello! I'd be happy to help you schedule a meeting. What's your name?"
+- You: "My name is John"
+- Assistant: "Nice to meet you, John. When would you like to schedule this meeting?"
+- You: "Tomorrow at 2 PM"
+- Assistant: "Great! What would you like to name this meeting?"
+- You: "Team Standup"
+- Assistant: "Perfect! Let me confirm: You want to schedule 'Team Standup' for tomorrow at 2 PM. Is that correct?"
+- You: "Yes"
+- Assistant: "Great! I've created the event in your calendar."
+
+**Example 2: Meeting with Details**
+- You: "Schedule a meeting with Sarah next Monday at 10 AM called Project Review"
+- Assistant: (Will ask for confirmation and then create the event)
+
+#### 5. Verify Calendar Event
+
+1. Open your Google Calendar (calendar.google.com)
+2. Check the date/time you specified
+3. You should see the event you just created via voice
+
+#### 6. View Conversation History
+
+- Navigate to `/dashboard` to view all your conversations
+- See transcripts, created events, and conversation statistics
+
+### Testing Tips
+
+- **Speak Clearly**: The agent uses speech-to-text, so speak clearly and at a normal pace
+- **Wait for Confirmation**: The assistant will always confirm details before creating an event
+- **Natural Language**: You can use phrases like "tomorrow", "next Monday", "in 2 hours", etc.
+- **Browser Console**: Open browser developer tools (F12) to see WebSocket messages and debug any issues
+
+### Common Test Scenarios
+
+✅ **Test successful scheduling**: Schedule a meeting for tomorrow  
+✅ **Test time parsing**: Try different time formats ("2 PM", "14:00", "afternoon")  
+✅ **Test date parsing**: Try "tomorrow", "next Monday", "in 3 days"  
+✅ **Test cancellation**: Start scheduling but say "cancel" or "never mind"  
+✅ **Test error handling**: Try scheduling without connecting calendar first  
+
+## 🏃 Running Locally
+
+### Quick Start
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/oggagan/schedulingVoiceAgent.git
+   cd schedulingVoiceAgent
+   ```
+
+2. **Create virtual environment**
+   ```bash
+   # Windows
+   python -m venv venv
+   venv\Scripts\activate
+
+   # Linux/Mac
+   python3 -m venv venv
+   source venv/bin/activate
+   ```
+
+3. **Install dependencies**
+   ```bash
+   pip install --upgrade pip
+   pip install -r requirements.txt
+   ```
+
+4. **Configure environment**
+   ```bash
+   # Copy example environment file
+   cp env.example .env
+
+   # Edit .env and add your credentials:
+   # - OPENAI_API_KEY (from https://platform.openai.com/api-keys)
+   # - GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET (from Google Cloud Console)
+   ```
+
+5. **Set up Google OAuth** (see [Prerequisites](#prerequisites) section)
+
+6. **Run the application**
+   ```bash
+   python run.py
+   # or
+   uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+   ```
+
+7. **Access the application**
+   - Open your browser to `http://localhost:8000`
+   - Follow the testing instructions above
+
+### Using Docker (Local)
+
+```bash
+# Build and run with Docker Compose
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop the application
+docker-compose down
+```
+
+### Local Development Tips
+
+- **Hot Reload**: The `--reload` flag enables automatic reloading on code changes
+- **Database**: SQLite database is created automatically at `data/voice_agent.db`
+- **Logs**: Check `logs/app.log` for application logs
+- **API Docs**: Visit `http://localhost:8000/docs` for interactive API documentation
+
+## 📅 Calendar Integration
+
+### Overview
+
+The Voice Scheduling Agent integrates with Google Calendar using OAuth 2.0 authentication and the Google Calendar API. When users schedule meetings through voice conversations, events are automatically created in their Google Calendar.
+
+### How It Works
+
+#### 1. Authentication Flow
+
+```
+User → Click "Connect Calendar" → Google OAuth Consent Screen → 
+Grant Permissions → Redirect Back → Token Stored → Ready to Schedule
+```
+
+- **OAuth 2.0**: Uses Google's standard OAuth 2.0 flow for secure authentication
+- **Scopes**: Requests `https://www.googleapis.com/auth/calendar` permission
+- **Token Storage**: OAuth tokens are securely stored (encrypted in database or pickle file)
+- **Token Refresh**: Automatically refreshes expired tokens using refresh tokens
+
+#### 2. Event Creation Process
+
+When a user schedules a meeting via voice:
+
+1. **Voice Input**: User speaks meeting details (name, date, time, title)
+2. **AI Processing**: OpenAI Realtime API transcribes and understands the request
+3. **Confirmation**: Assistant confirms all details with the user
+4. **Function Call**: Assistant calls `add_calendar_event` function with:
+   - `summary`: Meeting title
+   - `start_time`: Start time in ISO 8601 format
+   - `end_time`: End time (defaults to 1 hour after start if not specified)
+   - `description`: Optional meeting description
+   - `attendee_name`: Name of the person scheduling
+5. **API Call**: Backend uses Google Calendar API to create the event:
+   ```python
+   service.events().insert(calendarId='primary', body=event).execute()
+   ```
+6. **Confirmation**: User receives voice confirmation that the event was created
+
+#### 3. Technical Details
+
+**Calendar Service** (`app/services/calendar.py`):
+- Handles OAuth flow and token management
+- Manages multi-user support with per-user token storage
+- Creates events with proper timezone handling
+- Stores event metadata in local database
+
+**Event Structure**:
+```python
+{
+    'summary': 'Meeting Title',
+    'description': 'Meeting description and attendee info',
+    'start': {
+        'dateTime': '2024-01-15T14:00:00',
+        'timeZone': 'UTC'  # or user's timezone
+    },
+    'end': {
+        'dateTime': '2024-01-15T15:00:00',
+        'timeZone': 'UTC'
+    }
+}
+```
+
+**Database Storage**:
+- All created events are stored in the `calendar_events` table
+- Links events to conversations for history tracking
+- Stores Google event ID, HTML link, and metadata
+
+#### 4. Features
+
+- ✅ **Automatic Timezone Handling**: Converts user-specified times to proper timezone
+- ✅ **Relative Date Parsing**: Understands "tomorrow", "next Monday", "in 2 days"
+- ✅ **Default Duration**: 1-hour meetings if end time not specified
+- ✅ **Event Metadata**: Stores attendee names and descriptions
+- ✅ **Error Handling**: Graceful error messages if calendar is not connected
+- ✅ **Multi-User Support**: Each user's calendar is accessed with their own tokens
+
+#### 5. Security
+
+- **OAuth 2.0**: Industry-standard authentication
+- **Token Encryption**: Tokens are encrypted before storage
+- **Scope Limitation**: Only requests calendar access (read/write)
+- **No Password Storage**: Never stores Google passwords
+- **HTTPS Required**: Production deployments should use HTTPS
+
+#### 6. Limitations
+
+- **Single Calendar**: Currently creates events in the user's primary calendar only
+- **No Attendees**: Does not add email attendees (can be added in future)
+- **No Recurring Events**: Does not support recurring meetings yet
+- **No Event Updates**: Cannot modify or delete events via voice (read-only after creation)
+
+### Configuration
+
+To set up Google Calendar integration:
+
+1. **Google Cloud Console Setup**:
+   - Create a project at [Google Cloud Console](https://console.cloud.google.com/)
+   - Enable Google Calendar API
+   - Create OAuth 2.0 credentials (Web application)
+   - Add authorized redirect URI: `https://yourdomain.com/auth/callback`
+
+2. **Environment Variables**:
+   ```env
+   GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+   GOOGLE_CLIENT_SECRET=your-client-secret
+   GOOGLE_REDIRECT_URI=https://yourdomain.com/auth/callback
+   ```
+
+3. **Testing**: Use the `/auth/status` endpoint to check authentication status
 
 ## 🏗️ Architecture
 
