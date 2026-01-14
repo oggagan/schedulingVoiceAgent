@@ -89,7 +89,7 @@ def create_app() -> FastAPI:
         ],
         contact={
             "name": "Voice Scheduling Agent",
-            "url": "https://github.com/your-repo/voice-scheduling-agent",
+            "url": "https://github.com/oggagan/schedulingVoiceAgent.git",
         },
         license_info={
             "name": "MIT",
